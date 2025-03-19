@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة الإدارة</title>
+    <style>
+        body {
+            font-family: 'Tajawal', Arial, sans-serif;
+            text-align: center;
+            direction: rtl;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 30px auto;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            margin-bottom: 25px;
+            color: #2c3e50;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 15px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        input, button, textarea {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+            font-family: 'Tajawal', Arial, sans-serif;
+        }
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #4a90e2;
+            box-shadow: 0 0 5px rgba(74, 144, 226, 0.3);
+        }
+        .btn {
+            background: #4a90e2;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            border: none;
+        }
+        .btn:hover {
+            background: #3a7bc8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .logout-btn {
+            background: #e74c3c;
+            margin-top: 20px;
+        }
+        .logout-btn:hover {
+            background: #c0392b;
+        }
+        .add-btn {
+            background: #27ae60;
+        }
+        .add-btn:hover {
+            background: #219653;
+        }
+        #admin-results {
+            margin-top: 30px;
+            text-align: right;
+        }
+        .entry-card {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border-right: 4px solid #4a90e2;
+            position: relative;
+        }
+        .entry-title {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        .entry-metadata {
+            color: #7f8c8d;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .entry-definition {
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .edit-btn, .delete-btn {
+            width: auto;
+            padding: 8px 16px;
+            margin-bottom: 0;
+        }
+        .edit-btn {
+            background: #f39c12;
+        }
+        .edit-btn:hover {
+            background: #d35400;
+        }
+        .delete-btn {
+            background: #e74c3c;
+        }
+        .delete-btn:hover {
+            background: #c0392b;
+        }
+        .status-message {
+            padding: 10px;
+            margin: 15px 0;
+            border-radius: 5px;
+            display: none;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        /* Fixed search container styling for RTL */
+        .search-container {
+            position: relative;
+            margin-bottom: 20px;
+            margin-top: 20px;
+        }
+        .search-icon {
+            position: absolute;
+            right: 15px; /* Changed from left to right for RTL */
+            top: 14px;
+            color: #95a5a6;
+            font-size: 20px;
+        }
+        #admin-search {
+            width: 100%;
+            padding: 15px 15px 15px 45px; /* Adjusted padding for RTL */
+            border-radius: 50px;
+            border: 2px solid #e0e0e0;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            text-align: right; /* Ensure text is aligned right for Arabic */
+        }
+        #admin-search:focus {
+            outline: none;
+            border-color: #4a90e2;
+            box-shadow: 0 0 8px rgba(74, 144, 226, 0.3);
+        }
+        #search-status {
+            color: #7f8c8d;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        @media (max-width: 768px) {
+            .container {
+                width: 95%;
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body onload="checkAdmin()">
+
+    <div class="container">
+        <div class="header">
+            <h2>🛠️ لوحة الإدارة</h2>
+        </div>
+        
+        <div class="form-group">
+            <input type="text" id="word" placeholder="أدخل الكلمة">
+            <input type="text" id="title" placeholder="أدخل العنوان">
+            <input type="text" id="section" placeholder="أدخل رقم المقطع">
+            <textarea id="definition" placeholder="أدخل التعريف"></textarea>
+            <button class="btn add-btn" onclick="addEntry()">إضافة كلمة 📌</button>
+            <div id="status-message" class="status-message"></div>
+        </div>
+        <button class="btn logout-btn" onclick="logout()">🚪 تسجيل الخروج</button>
+        
+        <div class="header">
+            <h3>📜 قائمة الكلمات</h3>
+        </div>
+        
+        <!-- Fixed search container -->
+        <div class="search-container">
+            <input type="text" id="admin-search" placeholder="ابحث عن كلمة، عنوان أو رقم مقطع...">
+            <div class="search-icon">🔍</div>
+        </div>
+        <div id="search-status">جميع الكلمات</div>
+        
+        <div id="admin-results"></div>
+    </div>
+
+    <script>
+        const apiUrl = "http://localhost:5000/entries";
+        let allEntries = []; // Store all entries for searching
+        let searchTimeout; // For debouncing search
+
+        function checkAdmin() {
+            if (!localStorage.getItem("admin")) {
+                alert("🚫 لا يمكنك الوصول إلى هذه الصفحة!");
+                window.location.href = "index.html";
+            } else {
+                fetchAndDisplayEntries();
+            }
+        }
+        
+        function showStatusMessage(message, isSuccess) {
+            const statusDiv = document.getElementById("status-message");
+            statusDiv.textContent = message;
+            statusDiv.className = isSuccess ? "status-message success" : "status-message error";
+            statusDiv.style.display = "block";
+            
+            // Hide message after 3 seconds
+            setTimeout(() => {
+                statusDiv.style.display = "none";
+            }, 3000);
+        }
+
+        async function fetchEntries() {
+            try {
+                const res = await fetch(apiUrl);
+                if (!res.ok) {
+                    throw new Error(`HTTP error! Status: ${res.status}`);
+                }
+                return await res.json();
+            } catch (error) {
+                console.error("Error fetching entries:", error);
+                showStatusMessage("❌ فشل في جلب البيانات من الخادم", false);
+                return [];
+            }
+        }
+
+        async function fetchAndDisplayEntries() {
+            const resultsDiv = document.getElementById("admin-results");
+            resultsDiv.innerHTML = "<p>جاري تحميل البيانات...</p>";
+
+            try {
+                allEntries = await fetchEntries();
+                
+                if (allEntries.length === 0) {
+                    resultsDiv.innerHTML = "<p>لا توجد بيانات متاحة</p>";
+                    document.getElementById("search-status").textContent = "لا توجد كلمات لعرضها";
+                    return;
+                }
+                
+                displayEntries(allEntries);
+                document.getElementById("search-status").textContent = `تم العثور على ${allEntries.length} كلمة`;
+            } catch (error) {
+                console.error("Error displaying entries:", error);
+                resultsDiv.innerHTML = "<p>❌ حدث خطأ أثناء تحميل البيانات</p>";
+            }
+        }
+        
+        function displayEntries(entries) {
+            const resultsDiv = document.getElementById("admin-results");
+            resultsDiv.innerHTML = "";
+            
+            if (entries.length === 0) {
+                resultsDiv.innerHTML = "<p>لا توجد نتائج مطابقة للبحث</p>";
+                return;
+            }
+            
+            entries.forEach(entry => {
+                const div = document.createElement("div");
+                div.className = "entry-card";
+                div.innerHTML = `
+                    <div class="entry-title"><strong>${entry.word}</strong></div>
+                    <div class="entry-metadata">${entry.title} - المقطع ${entry.section}</div>
+                    <div class="entry-definition">${entry.definition}</div>
+                    <div class="action-buttons">
+                        <button class="btn edit-btn" onclick="editEntry('${entry.id}')">✏️ تعديل</button>
+                        <button class="btn delete-btn" onclick="deleteEntry('${entry.id}')">🗑️ حذف</button>
+                    </div>
+                `;
+                resultsDiv.appendChild(div);
+            });
+        }
+
+        function searchEntries(query) {
+            // Console log for debugging
+            console.log("Searching for:", query);
+            console.log("All entries:", allEntries);
+            
+            if (!query || query.length < 1) {
+                displayEntries(allEntries);
+                document.getElementById("search-status").textContent = `تم عرض ${allEntries.length} كلمة`;
+                return;
+            }
+            
+            const queryLower = query.toLowerCase();
+            
+            // Make sure we're working with an array
+            if (!Array.isArray(allEntries)) {
+                console.error("allEntries is not an array:", allEntries);
+                return;
+            }
+            
+            const filteredEntries = allEntries.filter(entry => {
+                // Check if all required properties exist
+                if (!entry || typeof entry !== 'object') return false;
+                
+                const wordMatch = entry.word && entry.word.toLowerCase().includes(queryLower);
+                const titleMatch = entry.title && entry.title.toLowerCase().includes(queryLower);
+                const sectionMatch = entry.section && entry.section.toString().toLowerCase().includes(queryLower);
+                const definitionMatch = entry.definition && entry.definition.toLowerCase().includes(queryLower);
+                
+                return wordMatch || titleMatch || sectionMatch || definitionMatch;
+            });
+            
+            console.log("Filtered entries:", filteredEntries);
+            
+            displayEntries(filteredEntries);
+            document.getElementById("search-status").textContent = 
+                filteredEntries.length > 0 
+                    ? `تم العثور على ${filteredEntries.length} نتيجة` 
+                    : "لا توجد نتائج مطابقة للبحث";
+        }
+
+        async function addEntry() {
+            const wordInput = document.getElementById("word");
+            const titleInput = document.getElementById("title");
+            const sectionInput = document.getElementById("section");
+            const definitionInput = document.getElementById("definition");
+            
+            const word = wordInput.value.trim();
+            const title = titleInput.value.trim();
+            const section = sectionInput.value.trim();
+            const definition = definitionInput.value.trim();
+
+            if (!word || !title || !section || !definition) {
+                showStatusMessage("⚠️ يرجى إدخال جميع البيانات", false);
+                return;
+            }
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ word, title, section, definition })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                
+                // Clear form fields
+                wordInput.value = "";
+                titleInput.value = "";
+                sectionInput.value = "";
+                definitionInput.value = "";
+                
+                showStatusMessage("✅ تمت إضافة الكلمة بنجاح!", true);
+                fetchAndDisplayEntries();
+            } catch (error) {
+                console.error("Error adding entry:", error);
+                showStatusMessage("❌ فشل في إضافة الكلمة", false);
+            }
+        }
+
+        async function deleteEntry(id) {
+            if (!confirm("⚠️ هل أنت متأكد أنك تريد حذف هذا الإدخال؟")) return;
+
+            try {
+                const response = await fetch(`${apiUrl}/${id}`, { 
+                    method: "DELETE"
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                
+                showStatusMessage("✅ تم الحذف بنجاح!", true);
+                fetchAndDisplayEntries();
+            } catch (error) {
+                console.error("Error deleting entry:", error);
+                showStatusMessage("❌ فشل في حذف الكلمة", false);
+            }
+        }
+
+        async function editEntry(id) {
+            try {
+                // Get the current entry data first
+                const res = await fetch(`${apiUrl}/${id}`);
+                if (!res.ok) {
+                    throw new Error(`HTTP error! Status: ${res.status}`);
+                }
+                
+                const entry = await res.json();
+                
+                // Create a modal form for editing
+                const modalHTML = `
+                <div id="edit-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; display: flex; align-items: center; justify-content: center;">
+                    <div style="background: white; padding: 20px; border-radius: 10px; width: 80%; max-width: 500px; max-height: 90vh; overflow-y: auto;">
+                        <h3>✏️ تعديل الكلمة</h3>
+                        <input type="text" id="edit-word" value="${entry.word}" placeholder="الكلمة">
+                        <input type="text" id="edit-title" value="${entry.title}" placeholder="العنوان">
+                        <input type="text" id="edit-section" value="${entry.section}" placeholder="رقم القسم">
+                        <textarea id="edit-definition" placeholder="التعريف">${entry.definition}</textarea>
+                        <div style="display: flex; gap: 10px; margin-top: 20px;">
+                            <button class="btn" style="background: #27ae60;" onclick="saveEditedEntry('${id}')">💾 حفظ التغييرات</button>
+                            <button class="btn" style="background: #7f8c8d;" onclick="closeEditModal()">❌ إلغاء</button>
+                        </div>
+                    </div>
+                </div>`;
+                
+                // Add modal to body
+                const modalContainer = document.createElement('div');
+                modalContainer.innerHTML = modalHTML;
+                document.body.appendChild(modalContainer);
+                
+            } catch (error) {
+                console.error("Error editing entry:", error);
+                showStatusMessage("❌ فشل في تحميل بيانات الكلمة للتعديل", false);
+            }
+        }
+        
+        function closeEditModal() {
+            const modal = document.getElementById('edit-modal');
+            if (modal) {
+                modal.parentNode.removeChild(modal);
+            }
+        }
+        
+        async function saveEditedEntry(id) {
+            const word = document.getElementById("edit-word").value.trim();
+            const title = document.getElementById("edit-title").value.trim();
+            const section = document.getElementById("edit-section").value.trim();
+            const definition = document.getElementById("edit-definition").value.trim();
+            
+            if (!word || !title || !section || !definition) {
+                alert("⚠️ يجب إدخال جميع البيانات!");
+                return;
+            }
+            
+            try {
+                const updatedEntry = { word, title, section, definition };
+                
+                const response = await fetch(`${apiUrl}/${id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(updatedEntry),
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                
+                closeEditModal();
+                showStatusMessage("✅ تم التعديل بنجاح!", true);
+                fetchAndDisplayEntries();
+            } catch (error) {
+                console.error("Error updating entry:", error);
+                showStatusMessage("❌ فشل في تحديث الكلمة", false);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem("admin");
+            window.location.href = "index.html";
+        }
+        
+        // Setup event listener for search with proper logging
+        document.getElementById("admin-search").addEventListener("input", (e) => {
+            clearTimeout(searchTimeout);
+            
+            // Add a small delay to prevent searching on every keystroke
+            searchTimeout = setTimeout(() => {
+                const searchTerm = e.target.value.trim();
+                console.log("Search triggered with term:", searchTerm);
+                searchEntries(searchTerm);
+            }, 300);
+        });
+
+        // Make sure the search function is triggered when page loads with existing input
+        window.addEventListener('DOMContentLoaded', () => {
+            const searchInput = document.getElementById("admin-search");
+            if (searchInput.value.trim()) {
+                searchEntries(searchInput.value.trim());
+            }
+        });
+    </script>
+
+</body>
+</html>
